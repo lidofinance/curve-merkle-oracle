@@ -11,10 +11,14 @@ library StateProofVerifier {
     using RLPReader for bytes;
 
     uint256 constant HEADER_STATE_ROOT_INDEX = 3;
+    uint256 constant HEADER_NUMBER_INDEX = 8;
+    uint256 constant HEADER_TIMESTAMP_INDEX = 11;
 
     struct BlockHeader {
         bytes32 hash;
         bytes32 stateRootHash;
+        uint256 number;
+        uint256 timestamp;
     }
 
     struct Account {
@@ -29,6 +33,7 @@ library StateProofVerifier {
         bool exists;
         uint256 value;
     }
+
 
     function verifyStateProof(
         bytes32 _addressHash, // keccak256(abi.encodePacked(address))
@@ -70,6 +75,7 @@ library StateProofVerifier {
         return (blockHeader, account, slots);
     }
 
+
     function _parseBlockHeader(bytes memory _headerRlpBytes)
         private pure returns (BlockHeader memory)
     {
@@ -77,10 +83,13 @@ library StateProofVerifier {
         RLPReader.RLPItem[] memory headerFields = _headerRlpBytes.toRlpItem().toList();
 
         result.stateRootHash = bytes32(headerFields[HEADER_STATE_ROOT_INDEX].toUint());
+        result.number = headerFields[HEADER_NUMBER_INDEX].toUint();
+        result.timestamp = headerFields[HEADER_TIMESTAMP_INDEX].toUint();
         result.hash = keccak256(_headerRlpBytes);
 
         return result;
     }
+
 
     function _extractAccountFromProof(
         bytes32 _addressHash, // keccak256(abi.encodePacked(address))
