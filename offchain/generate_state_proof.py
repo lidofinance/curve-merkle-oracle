@@ -86,7 +86,7 @@ def request_block_header(rpc_endpoint, block_number):
 
 
 def request_account_proof(rpc_endpoint, block_number, address, slots):
-    hex_slots = [hex(int(s)) for s in slots]
+    hex_slots = [s if s.startswith("0x") else hex(int(s)) for s in slots]
 
     r = requests.post(rpc_endpoint, json={
         "jsonrpc": "2.0",
@@ -97,7 +97,6 @@ def request_account_proof(rpc_endpoint, block_number, address, slots):
 
     r.raise_for_status()
     return r.json()["result"]
-
 
 def normalize_bytes(hash):
     if isinstance(hash, str):
@@ -117,7 +116,7 @@ def main():
         description="Patricia Merkle Trie Proof Generating Tool",
         formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("-n", "--block-number",
+    parser.add_argument("-b", "--block-number",
         default="latest",
         help="Block number")
 
@@ -129,8 +128,8 @@ def main():
         default="",
         help="Account address")
 
-    parser.add_argument("-s", "--storage-slot-index", nargs="*",
-        help="Indices of storage slots to prove")
+    parser.add_argument("-s", "--slot-positions", nargs="*",
+        help="Positions of storage slots to prove")
 
     args = parser.parse_args()
 
@@ -138,7 +137,7 @@ def main():
         args.rpc,
         args.block_number,
         args.address,
-        args.storage_slot_index
+        args.slot_positions
     )
 
     print(f"\nBlock number: {block_number}\n")
