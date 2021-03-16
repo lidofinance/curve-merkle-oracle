@@ -5,3 +5,4 @@ build/
 reports/
 .DS_Store
 .env
+/venv

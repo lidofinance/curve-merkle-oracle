@@ -47,12 +47,12 @@ library StateProofVerifier {
             SlotValue[] memory slots
         )
     {
-        blockHeader = _parseBlockHeader(_blockHeaderRlpBytes);
+        blockHeader = parseBlockHeader(_blockHeaderRlpBytes);
 
         RLPReader.RLPItem[] memory proofs = _proofRlpBytes.toRlpItem().toList();
         require(proofs.length == 2);
 
-        account = _extractAccountFromProof(
+        account = extractAccountFromProof(
             _addressHash,
             blockHeader.stateRootHash,
             proofs[0].toList()
@@ -69,15 +69,25 @@ library StateProofVerifier {
 
         for (uint256 i = 0; i < _slotHashes.length; ++i) {
             RLPReader.RLPItem[] memory slotProof = slotProofs[i].toList();
-            slots[i] = _extractSlotValueFromProof(_slotHashes[i], account.storageRoot, slotProof);
+            slots[i] = extractSlotValueFromProof(_slotHashes[i], account.storageRoot, slotProof);
         }
 
         return (blockHeader, account, slots);
     }
 
 
-    function _parseBlockHeader(bytes memory _headerRlpBytes)
-        private pure returns (BlockHeader memory)
+    function verifyBlockHeader(bytes memory _headerRlpBytes)
+        internal view returns (BlockHeader memory)
+    {
+        BlockHeader memory header = parseBlockHeader(_headerRlpBytes);
+        // ensure that the block is actually in the blockchain
+        require(header.hash == blockhash(header.number), "blockhash mismatch");
+        return header;
+    }
+
+
+    function parseBlockHeader(bytes memory _headerRlpBytes)
+        internal pure returns (BlockHeader memory)
     {
         BlockHeader memory result;
         RLPReader.RLPItem[] memory headerFields = _headerRlpBytes.toRlpItem().toList();
@@ -91,12 +101,12 @@ library StateProofVerifier {
     }
 
 
-    function _extractAccountFromProof(
+    function extractAccountFromProof(
         bytes32 _addressHash, // keccak256(abi.encodePacked(address))
         bytes32 _stateRootHash,
         RLPReader.RLPItem[] memory _proof
     )
-        private pure returns (Account memory)
+        internal pure returns (Account memory)
     {
         bytes memory acctRlpBytes = MerklePatriciaProofVerifier.extractProofValue(
             _stateRootHash,
@@ -123,12 +133,12 @@ library StateProofVerifier {
     }
 
 
-    function _extractSlotValueFromProof(
+    function extractSlotValueFromProof(
         bytes32 _slotHash,
         bytes32 _storageRootHash,
         RLPReader.RLPItem[] memory _proof
     )
-        private pure returns (SlotValue memory)
+        internal pure returns (SlotValue memory)
     {
         bytes memory valueRlpBytes = MerklePatriciaProofVerifier.extractProofValue(
             _storageRootHash,
