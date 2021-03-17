@@ -1,5 +1,62 @@
 [
   {
+    "name": "NewSlotValues",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "timestamp",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "poolEthBalance",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "poolAdminEthBalance",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "poolAdminStethBalance",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethPoolShares",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethTotalShares",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethBeaconBalance",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethBufferedEther",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethDepositedValidators",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethBeaconValidators",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
     "name": "submitState",
     "outputs": [],
     "inputs": [
