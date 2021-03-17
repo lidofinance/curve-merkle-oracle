@@ -11,6 +11,7 @@ contract StableSwapStateOracle {
     using RLPReader for RLPReader.RLPItem;
 
     event NewSlotValues(
+        uint256 timestamp,
         uint256 poolEthBalance,
         uint256 poolAdminEthBalance,
         uint256 poolAdminStethBalance,
@@ -235,6 +236,7 @@ contract StableSwapStateOracle {
         require(slotStethBeaconValidators.exists, "beaconValidators");
 
         emit NewSlotValues(
+            blockHeader.timestamp,
             accountPool.balance,
             slotPoolAdminBalances0.value,
             slotPoolAdminBalances1.value,
