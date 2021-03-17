@@ -3,7 +3,8 @@
 pragma solidity 0.6.12;
 
 import "hamdiallam/Solidity-RLP@2.0.3/contracts/RLPReader.sol";
-import {MerklePatriciaProofVerifier} from "./MerklePatriciaProofVerifier.sol";
+// import {MerklePatriciaProofVerifier} from "./MerklePatriciaProofVerifier.sol";
+import {TrieProofs as MerklePatriciaProofVerifier} from "./TrieProofs.sol";
 
 
 library StateProofVerifier {
@@ -110,7 +111,7 @@ library StateProofVerifier {
     {
         bytes memory acctRlpBytes = MerklePatriciaProofVerifier.extractProofValue(
             _stateRootHash,
-            abi.encodePacked(_addressHash),
+            _addressHash,
             _proof
         );
 
@@ -142,7 +143,7 @@ library StateProofVerifier {
     {
         bytes memory valueRlpBytes = MerklePatriciaProofVerifier.extractProofValue(
             _storageRootHash,
-            abi.encodePacked(_slotHash),
+            _slotHash,
             _proof
         );
 
