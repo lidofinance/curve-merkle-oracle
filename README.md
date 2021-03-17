@@ -1,25 +1,26 @@
-# Curve StableSwap state oracle
+# Trustless state oracle for ETH/stETH Curve pool
 
-This repo implements a trustless oracle of a Curve StableSwap pool using Merkle Patricia proofs
+A trustless oracle for the ETH/stETH Curve pool balances using Merkle Patricia proofs
 of Ethereum state.
 
 
-## Playing with the code
+## Sending oracle transaction
 
-Generate the proof:
-
-```text
-python3 offchain/generate_state_proof.py \
-  --rpc http://host.docker.internal:9545 \
-  --address 0xDC24316b9AE028F1497c275EB9192a3Ea0f67022 \
-  --slot-positions 0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6 \
-                   0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf7 \
-  --block-number 12020099
-```
-
-Submit the proof and read the state (inside brownie console):
+Use the following command to generate a proof correnspoding to the block `latest - 15`:
 
 ```
-tx = oracle.submitState(blockHeader, proof)
-oracle.getState()
+python offchain/generate_steth_price_proof.py \
+  --rpc <RPC endpoint of a geth node> \
+  --keyfile <path to a JSON file containing an encrypted private key> \
+  --gas-price <tx gas price in wei> \
+  --contract <oracle contract address>
 ```
+
+Skip `--keyfile` and `--gas-price` flags to print the proof without sending a tx.
+
+
+## Reading the reported balances
+
+Use `oracle.getState()` function that returns a `(timestamp, etherBalance, stethBalance)` tuple
+corresponding to the most fresh data, where `timestamp` is the one of the block the proof was
+generated for.
