@@ -4,11 +4,13 @@ pragma solidity 0.6.12;
 
 import "hamdiallam/Solidity-RLP@2.0.3/contracts/RLPReader.sol";
 import {StateProofVerifier as Verifier} from "./StateProofVerifier.sol";
+import {SafeMath} from "./SafeMath.sol";
 
 
 contract StableSwapStateOracle {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
+    using SafeMath for uint256;
 
     event NewSlotValues(
         uint256 timestamp,
@@ -21,6 +23,12 @@ contract StableSwapStateOracle {
         uint256 stethBufferedEther,
         uint256 stethDepositedValidators,
         uint256 stethBeaconValidators
+    );
+
+    event NewBalances(
+        uint256 timestamp,
+        uint256 etherBalance,
+        uint256 stethBalance
     );
 
     // Prevent reporitng data that is more fresh than this number of blocks ago
@@ -247,6 +255,45 @@ contract StableSwapStateOracle {
             slotStethDepositedValidators.value,
             slotStethBeaconValidators.value
         );
+
+        uint256 etherBalance = accountPool.balance.sub(slotPoolAdminBalances0.value);
+        uint256 stethBalance;
+
+        {
+            uint256 poolStethBalance = _getStethBalanceByShares(
+                slotStethPoolShares.value,
+                slotStethTotalShares.value,
+                slotStethBeaconBalance.value,
+                slotStethBufferedEther.value,
+                slotStethDepositedValidators.value,
+                slotStethBeaconValidators.value
+            );
+            stethBalance = poolStethBalance.sub(slotPoolAdminBalances1.value);
+        }
+
+        state.timestamp = blockHeader.timestamp;
+        state.etherBalance = etherBalance;
+        state.stethBalance = stethBalance;
+
+        emit NewBalances(blockHeader.timestamp, etherBalance, stethBalance);
     }
 
+
+    function _getStethBalanceByShares(
+        uint256 shares,
+        uint256 totalShares,
+        uint256 beaconBalance,
+        uint256 bufferedEther,
+        uint256 depositedValidators,
+        uint256 beaconValidators
+    )
+        internal pure returns (uint256)
+    {
+        if (totalShares == 0) {
+            return 0;
+        }
+        uint256 transientBalance = depositedValidators.sub(beaconValidators).mul(STETH_DEPOSIT_SIZE);
+        uint256 totalPooledEther = bufferedEther.add(beaconBalance).add(transientBalance);
+        return shares.mul(totalPooledEther).div(totalShares);
+    }
 }
