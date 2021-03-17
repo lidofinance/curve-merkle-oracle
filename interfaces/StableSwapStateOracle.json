@@ -57,6 +57,28 @@
     "type": "event"
   },
   {
+    "name": "NewBalances",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "timestamp",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "etherBalance",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethBalance",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
     "name": "submitState",
     "outputs": [],
     "inputs": [

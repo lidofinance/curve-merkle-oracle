@@ -8,7 +8,7 @@ from getpass import getpass
 
 from ethereum import block, messages, transactions, utils
 from web3 import Web3
-from web3.logs import WARN
+from web3.logs import DISCARD
 import requests
 import rlp
 
@@ -100,12 +100,8 @@ def main():
     if int(receipt['status']) != 1:
         print("\nTransaction failed")
     else:
-        # https://github.com/ethereum/web3.py/issues/1738
-        logs = oracle_contract.events['NewSlotValues']().processReceipt(receipt, WARN)
-        if len(logs) != 0:
-            print("\nNewSlotValues event:")
-            for key, value in logs[0]['args'].items():
-                print(f"  {key}: {value}")
+        print_event("NewSlotValues", receipt, oracle_contract)
+        print_event("NewBalances", receipt, oracle_contract)
 
 
 def get_oracle_contract(address, w3):
@@ -121,6 +117,17 @@ def load_private_key(path, w3):
         encrypted_key = keyfile.read()
         password = getpass()
         return w3.eth.account.decrypt(encrypted_key, password)
+
+
+def print_event(name, receipt, contract):
+    # https://github.com/ethereum/web3.py/issues/1738
+    logs = contract.events[name]().processReceipt(receipt, DISCARD)
+    if len(logs) != 0:
+        print(f"\n{name} event:")
+        for key, value in logs[0]['args'].items():
+            print(f"  {key}: {value}")
+    else:
+        print(f"\nNo {name} event generated")
 
 
 def generate_proof_data(
