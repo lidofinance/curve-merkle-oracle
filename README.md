@@ -1,10 +1,9 @@
 # Trustless price oracle for ETH/stETH Curve pool
 
 A trustless oracle for the ETH/stETH Curve pool using Merkle Patricia proofs of Ethereum state.
-It provides the interface identical to the one of the actual Curve pool.
 
 The oracle currently assumes that the pool's `fee` and `A` (amplification coefficient) values don't
-change between the report and `get_dy` call.
+change between the time of proof generation and submission.
 
 
 ## Mechanics
@@ -28,62 +27,45 @@ The oracle works by generating and verifying Merkle Patricia proofs of the follo
 
 The repo contains two main contracts:
 
-* [`StableSwapStateOracle.sol`] is the contract that receives and verifies the report from the
-  offchain code, and persists the verified state along with its timestamp.
+* [`StableSwapStateOracle.sol`] is the main oracle contract. It receives and verifies the report
+  from the offchain code, and persists the verified state along with its timestamp.
 
-* [`StableSwapPriceOracle.vy`] is the contract that provides the `det_dy` function, using the
-  persisted state from `StableSwapStateOracle`.
-
+* [`StableSwapPriceHelper.vy`] is a helper contract used by `StableSwapStateOracle.sol` and written
+  in Vyper. It contains the code for calculating exchange price based on the pool state. The code
+  is copied from the [actual pool contract] with minimal modifiactions.
 
 [`StableSwapStateOracle.sol`]: ./contracts/StableSwapStateOracle.sol
-[`StableSwapPriceOracle.vy`]: ./contracts/StableSwapPriceOracle.vy
+[`StableSwapPriceHelper.vy`]: ./contracts/StableSwapPriceHelper.vy
+[actual pool contract]: https://github.com/curvefi/curve-contract/blob/3fa3b6c/contracts/pools/steth/StableSwapSTETH.vy
 
 
 ## Deploying and using contracts
 
-First, deploy `StableSwapStateOracle`. Then, deploy `StableSwapPriceOracle`, pointing it
-to `StableSwapStateOracle` using the constructor param:
+First, deploy `StableSwapPriceHelper`. Then, deploy `StableSwapStateOracle`, pointing it
+to `StableSwapPriceHelper` using the constructor param:
 
 ```python
 # assuming eth-brownie console
-state_oracle = StableSwapStateOracle.deploy({ 'from': deployer })
-price_oracle = StableSwapPriceOracle.deploy(state_oracle, { 'from': deployer })
+helper = StableSwapPriceHelper.deploy({ 'from': deployer })
+oracle = StableSwapStateOracle.deploy(helper, { 'from': deployer })
 ```
 
 To send proofs to the state oracle, call `submitState` function:
 
 ```python
-header_rlp_bytes = b"<header data>"
-proofs_rlp_bytes = b"<proofs data>"
+header_rlp_bytes = '0x...'
+proofs_rlp_bytes = '0x...'
 
-tx = state_oracle.submitState(header_rlp_bytes, proofs_rlp_bytes, { 'from': reporter })
+tx = oracle.submitState(header_rlp_bytes, proofs_rlp_bytes, { 'from': reporter })
 ```
 
 The function is permissionless and, upon successful verification, will generate two events,
-`NewSlotValues` and `NewBalances`, and update the `state` struct with the verified pool
-balances. You can access the balances by calling `getState`:
+`SlotValuesUpdated` and `PriceUpdated`, and update the oracle with the verified pool balances
+and stETH price. You can access them by calling `getState` and `getPrice`:
 
 ```python
-(timestamp, etherBalance, stethBalance) = state_oracle.getState()
-```
-
-To get stETH price, use the price oracle's `get_dy` function:
-
-```python
-eth_for_1_steth = price_oracle.get_dy(1, 0, 10**18)
-```
-
-The price oracle provides the following functions:
-
-```python
-def state_oracle() -> address: view
-def data_timestamp() -> uint256: view
-
-# Curve StableSwap interface
-def get_dy(i: int128, j: int128, dx: uint256) -> uint256: view
-def A() -> uint256: view
-def A_precise() -> uint256: view
-def balances(i: uint256) -> uint256: view
+(timestamp, etherBalance, stethBalance, stethPrice) = oracle.getState()
+stethPrice = oracle.getPrice()
 ```
 
 

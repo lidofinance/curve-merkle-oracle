@@ -1,58 +1,12 @@
 # @version 0.2.8
 
-interface StableSwap:
-    def fee() -> uint256: view
-    def A_precise() -> uint256: view
+# The following code has been copied with minimal modifications from
+# https://github.com/curvefi/curve-contract/blob/3fa3b6c/contracts/pools/steth/StableSwapSTETH.vy
 
 
-interface StateOracle:
-    def getState() -> (uint256, uint256, uint256): view
-
-
-STETH_POOL: constant(address) = 0xDC24316b9AE028F1497c275EB9192a3Ea0f67022
 N_COINS: constant(int128) = 2
 FEE_DENOMINATOR: constant(uint256) = 10 ** 10
 A_PRECISION: constant(uint256) = 100
-
-
-state_oracle: public(address)
-
-
-@external
-def __init__(_state_oracle: address):
-    self.state_oracle = _state_oracle
-
-
-@view
-@external
-def data_timestamp() -> uint256:
-    return StateOracle(self.state_oracle).getState()[0]
-
-
-@view
-@internal
-def _balances(_value: uint256 = 0) -> uint256[N_COINS]:
-    ts: uint256 = 0
-    balance0: uint256 = 0
-    balance1: uint256 = 0
-    (ts, balance0, balance1) = StateOracle(self.state_oracle).getState()
-    return [balance0 - _value, balance1]
-
-
-@view
-@internal
-def _fee() -> uint256:
-    return StableSwap(STETH_POOL).fee()
-
-
-@view
-@internal
-def _A() -> uint256:
-    return StableSwap(STETH_POOL).A_precise()
-
-
-# The following code has been copied with minor modifications from
-# https://github.com/curvefi/curve-contract/blob/master/contracts/pools/steth/StableSwapSTETH.vy
 
 
 @pure
@@ -88,7 +42,7 @@ def get_D(xp: uint256[N_COINS], amp: uint256) -> uint256:
 
 @view
 @internal
-def get_y(i: int128, j: int128, x: uint256, xp: uint256[N_COINS]) -> uint256:
+def get_y(i: int128, j: int128, x: uint256, xp: uint256[N_COINS], amp: uint256) -> uint256:
     # x in the input is converted to the same price/precision
 
     assert i != j       # dev: same coin
@@ -99,7 +53,6 @@ def get_y(i: int128, j: int128, x: uint256, xp: uint256[N_COINS]) -> uint256:
     assert i >= 0
     assert i < N_COINS
 
-    amp: uint256 = self._A()
     D: uint256 = self.get_D(xp, amp)
     Ann: uint256 = amp * N_COINS
     c: uint256 = D
@@ -134,28 +87,8 @@ def get_y(i: int128, j: int128, x: uint256, xp: uint256[N_COINS]) -> uint256:
 
 @view
 @external
-def get_dy(i: int128, j: int128, dx: uint256) -> uint256:
-    xp: uint256[N_COINS] = self._balances()
+def get_dy(i: int128, j: int128, dx: uint256, xp: uint256[N_COINS], A: uint256, fee: uint256) -> uint256:
     x: uint256 = xp[i] + dx
-    y: uint256 = self.get_y(i, j, x, xp)
+    y: uint256 = self.get_y(i, j, x, xp, A)
     dy: uint256 = xp[j] - y - 1
-    fee: uint256 = self._fee() * dy / FEE_DENOMINATOR
-    return dy - fee
-
-
-@view
-@external
-def A() -> uint256:
-    return self._A() / A_PRECISION
-
-
-@view
-@external
-def A_precise() -> uint256:
-    return self._A()
-
-
-@view
-@external
-def balances(i: uint256) -> uint256:
-    return self._balances()[i]
+    return dy - fee * dy / FEE_DENOMINATOR

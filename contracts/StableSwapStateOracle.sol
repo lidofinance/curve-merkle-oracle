@@ -2,9 +2,27 @@
 
 pragma solidity 0.6.12;
 
-import "hamdiallam/Solidity-RLP@2.0.3/contracts/RLPReader.sol";
+import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.3/contracts/RLPReader.sol";
 import {StateProofVerifier as Verifier} from "./StateProofVerifier.sol";
 import {SafeMath} from "./SafeMath.sol";
+
+
+interface IPriceHelper {
+    function get_dy(
+        int128 i,
+        int128 j,
+        uint256 dx,
+        uint256[2] memory xp,
+        uint256 A,
+        uint256 fee
+    ) external pure returns (uint256);
+}
+
+
+interface IStableSwap {
+    function fee() external view returns (uint256);
+    function A_precise() external view returns (uint256);
+}
 
 
 contract StableSwapStateOracle {
@@ -12,7 +30,7 @@ contract StableSwapStateOracle {
     using RLPReader for RLPReader.RLPItem;
     using SafeMath for uint256;
 
-    event NewSlotValues(
+    event SlotValuesUpdated(
         uint256 timestamp,
         uint256 poolEthBalance,
         uint256 poolAdminEthBalance,
@@ -25,14 +43,15 @@ contract StableSwapStateOracle {
         uint256 stethBeaconValidators
     );
 
-    event NewBalances(
+    event PriceUpdated(
         uint256 timestamp,
         uint256 etherBalance,
-        uint256 stethBalance
+        uint256 stethBalance,
+        uint256 stethPrice
     );
 
     // Prevent reporitng data that is more fresh than this number of blocks ago
-    uint256 constant public MIN_BLOCK_DELAY = 15;
+    uint256 constant public MIN_BLOCK_DELAY = 2;
 
     // Constants for offchain proof generation
 
@@ -98,6 +117,19 @@ contract StableSwapStateOracle {
     uint256 constant internal STETH_DEPOSIT_SIZE = 32 ether;
 
 
+    IPriceHelper internal helper;
+
+    uint256 public timestamp;
+    uint256 public etherBalance;
+    uint256 public stethBalance;
+    uint256 public stethPrice;
+
+
+    constructor(IPriceHelper _helper) public {
+        helper = _helper;
+    }
+
+
     function getProofParams() external view returns (
         address poolAddress,
         address stethAddress,
@@ -125,40 +157,32 @@ contract StableSwapStateOracle {
     }
 
 
-    struct StableSwapState {
-        uint256 timestamp;
-        uint256 etherBalance;
-        uint256 stethBalance;
-    }
-
-
-    StableSwapState public state;
-
-
-    function getState()
-        external view returns (uint256 timestamp, uint256 etherBalance, uint256 stethBalance)
-    {
-        return (state.timestamp, state.etherBalance, state.stethBalance);
+    function getState() external view returns (
+        uint256 _timestamp,
+        uint256 _etherBalance,
+        uint256 _stethBalance,
+        uint256 _stethPrice
+    ) {
+        return (timestamp, etherBalance, stethBalance, stethPrice);
     }
 
 
     function submitState(bytes memory _blockHeaderRlpBytes, bytes memory _proofRlpBytes)
         external
     {
-        Verifier.BlockHeader memory blockHeader = Verifier.verifyBlockHeader(
-            _blockHeaderRlpBytes
-        );
+        Verifier.BlockHeader memory blockHeader = Verifier.verifyBlockHeader(_blockHeaderRlpBytes);
 
-        uint256 currentBlock = block.number;
+        {
+            uint256 currentBlock = block.number;
+            // ensure block finality
+            require(
+                currentBlock > blockHeader.number &&
+                currentBlock - blockHeader.number >= MIN_BLOCK_DELAY,
+                "block too fresh"
+            );
+        }
 
-        // ensure block finality
-        require(
-            currentBlock > blockHeader.number &&
-            currentBlock - blockHeader.number >= MIN_BLOCK_DELAY,
-            "block too fresh"
-        );
-
-        require(blockHeader.timestamp > state.timestamp, "stale data");
+        require(blockHeader.timestamp > timestamp, "stale data");
 
         RLPReader.RLPItem[] memory proofs = _proofRlpBytes.toRlpItem().toList();
         require(proofs.length == 10, "total proofs");
@@ -243,7 +267,7 @@ contract StableSwapStateOracle {
 
         require(slotStethBeaconValidators.exists, "beaconValidators");
 
-        emit NewSlotValues(
+        emit SlotValuesUpdated(
             blockHeader.timestamp,
             accountPool.balance,
             slotPoolAdminBalances0.value,
@@ -256,44 +280,49 @@ contract StableSwapStateOracle {
             slotStethBeaconValidators.value
         );
 
-        uint256 etherBalance = accountPool.balance.sub(slotPoolAdminBalances0.value);
-        uint256 stethBalance;
+        uint256 newEtherBalance = accountPool.balance.sub(slotPoolAdminBalances0.value);
+        uint256 newStethBalance = _getStethBalanceByShares(
+            slotStethPoolShares.value,
+            slotStethTotalShares.value,
+            slotStethBeaconBalance.value,
+            slotStethBufferedEther.value,
+            slotStethDepositedValidators.value,
+            slotStethBeaconValidators.value
+        ).sub(slotPoolAdminBalances1.value);
 
-        {
-            uint256 poolStethBalance = _getStethBalanceByShares(
-                slotStethPoolShares.value,
-                slotStethTotalShares.value,
-                slotStethBeaconBalance.value,
-                slotStethBufferedEther.value,
-                slotStethDepositedValidators.value,
-                slotStethBeaconValidators.value
-            );
-            stethBalance = poolStethBalance.sub(slotPoolAdminBalances1.value);
-        }
+        uint256 newStethPrice = _calcPrice(newEtherBalance, newStethBalance);
 
-        state.timestamp = blockHeader.timestamp;
-        state.etherBalance = etherBalance;
-        state.stethBalance = stethBalance;
+        timestamp = blockHeader.timestamp;
+        etherBalance = newEtherBalance;
+        stethBalance = newStethBalance;
+        stethPrice = newStethPrice;
 
-        emit NewBalances(blockHeader.timestamp, etherBalance, stethBalance);
+        emit PriceUpdated(blockHeader.timestamp, newEtherBalance, newStethBalance, newStethPrice);
     }
 
 
     function _getStethBalanceByShares(
-        uint256 shares,
-        uint256 totalShares,
-        uint256 beaconBalance,
-        uint256 bufferedEther,
-        uint256 depositedValidators,
-        uint256 beaconValidators
+        uint256 _shares,
+        uint256 _totalShares,
+        uint256 _beaconBalance,
+        uint256 _bufferedEther,
+        uint256 _depositedValidators,
+        uint256 _beaconValidators
     )
         internal pure returns (uint256)
     {
-        if (totalShares == 0) {
+        if (_totalShares == 0) {
             return 0;
         }
-        uint256 transientBalance = depositedValidators.sub(beaconValidators).mul(STETH_DEPOSIT_SIZE);
-        uint256 totalPooledEther = bufferedEther.add(beaconBalance).add(transientBalance);
-        return shares.mul(totalPooledEther).div(totalShares);
+        uint256 transientBalance = _depositedValidators.sub(_beaconValidators).mul(STETH_DEPOSIT_SIZE);
+        uint256 totalPooledEther = _bufferedEther.add(_beaconBalance).add(transientBalance);
+        return _shares.mul(totalPooledEther).div(_totalShares);
+    }
+
+
+    function _calcPrice(uint256 _etherBalance, uint256 _stethBalance) internal view returns (uint256) {
+        uint256 A = IStableSwap(POOL_ADDRESS).A_precise();
+        uint256 fee = IStableSwap(POOL_ADDRESS).fee();
+        return helper.get_dy(1, 0, 10**18, [_etherBalance, _stethBalance], A, fee);
     }
 }

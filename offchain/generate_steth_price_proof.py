@@ -100,8 +100,8 @@ def main():
     if int(receipt['status']) != 1:
         print("\nTransaction failed")
     else:
-        print_event("NewSlotValues", receipt, oracle_contract)
-        print_event("NewBalances", receipt, oracle_contract)
+        print_event("SlotValuesUpdated", receipt, oracle_contract)
+        print_event("PriceUpdated", receipt, oracle_contract)
 
 
 def get_oracle_contract(address, w3):

@@ -1,6 +1,6 @@
 [
   {
-    "name": "NewSlotValues",
+    "name": "SlotValuesUpdated",
     "inputs": [
       {
         "type": "uint256",
@@ -57,7 +57,7 @@
     "type": "event"
   },
   {
-    "name": "NewBalances",
+    "name": "PriceUpdated",
     "inputs": [
       {
         "type": "uint256",
@@ -72,6 +72,11 @@
       {
         "type": "uint256",
         "name": "stethBalance",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "stethPrice",
         "indexed": false
       }
     ],
