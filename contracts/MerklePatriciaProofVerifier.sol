@@ -6,7 +6,7 @@
  */
 pragma solidity 0.6.12;
 
-import "hamdiallam/Solidity-RLP@2.0.3/contracts/RLPReader.sol";
+import {RLPReader} from "skozin/Solidity-RLP@2.0.4-pre/contracts/RLPReader.sol";
 
 
 library MerklePatriciaProofVerifier {
@@ -51,14 +51,14 @@ library MerklePatriciaProofVerifier {
             // We use the fact that an rlp encoded list consists of some
             // encoding of its length plus the concatenation of its
             // *rlp-encoded* items.
-            rlpNode = stack[i].toRlpBytes();
+
             // The root node is hashed with Keccak-256 ...
-            if (i == 0 && rootHash != keccak256(rlpNode)) {
+            if (i == 0 && rootHash != stack[i].rlpBytesKeccak256()) {
                 revert();
             }
             // ... whereas all other nodes are hashed with the MPT
             // hash function.
-            if (i != 0 && nodeHashHash != _mptHashHash(rlpNode)) {
+            if (i != 0 && nodeHashHash != _mptHashHash(stack[i])) {
                 revert();
             }
             // We verified that stack[i] has the correct hash, so we
@@ -123,7 +123,7 @@ library MerklePatriciaProofVerifier {
                     } else {
                         // rlp(child) was at less than 32 bytes. node[1] contains
                         // rlp(child).
-                        nodeHashHash = keccak256(node[1].toRlpBytes());
+                        nodeHashHash = node[1].rlpBytesKeccak256();
                     }
                 }
             } else if (node.length == 17) {
@@ -149,7 +149,7 @@ library MerklePatriciaProofVerifier {
                     } else if (!node[nibble].isList()) {
                         nodeHashHash = keccak256(node[nibble].toBytes());
                     } else {
-                        nodeHashHash = keccak256(node[nibble].toRlpBytes());
+                        nodeHashHash = node[nibble].rlpBytesKeccak256();
                     }
                 } else {
                     // we have consumed the entire mptKey, so we need to look at what's contained in this node.
@@ -167,20 +167,20 @@ library MerklePatriciaProofVerifier {
     }
 
 
-    /// @dev Computes the hash of the Merkle-Patricia-Trie hash of the input.
+    /// @dev Computes the hash of the Merkle-Patricia-Trie hash of the RLP item.
     ///      Merkle-Patricia-Tries use a weird "hash function" that outputs
-    ///      *variable-length* hashes: If the input is shorter than 32 bytes,
-    ///      the MPT hash is the input. Otherwise, the MPT hash is the
-    ///      Keccak-256 hash of the input.
+    ///      *variable-length* hashes: If the item is shorter than 32 bytes,
+    ///      the MPT hash is the item. Otherwise, the MPT hash is the
+    ///      Keccak-256 hash of the item.
     ///      The easiest way to compare variable-length byte sequences is
     ///      to compare their Keccak-256 hashes.
-    /// @param input The byte sequence to be hashed.
-    /// @return Keccak-256(MPT-hash(input))
-    function _mptHashHash(bytes memory input) private pure returns (bytes32) {
-        if (input.length < 32) {
-            return keccak256(input);
+    /// @param item The RLP item to be hashed.
+    /// @return Keccak-256(MPT-hash(item))
+    function _mptHashHash(RLPReader.RLPItem memory item) private pure returns (bytes32) {
+        if (item.len < 32) {
+            return item.rlpBytesKeccak256();
         } else {
-            return keccak256(abi.encodePacked(keccak256(abi.encodePacked(input))));
+            return keccak256(abi.encodePacked(item.rlpBytesKeccak256()));
         }
     }
 

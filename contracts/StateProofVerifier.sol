@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "hamdiallam/Solidity-RLP@2.0.3/contracts/RLPReader.sol";
+import {RLPReader} from "skozin/Solidity-RLP@2.0.4-pre/contracts/RLPReader.sol";
 import {MerklePatriciaProofVerifier} from "./MerklePatriciaProofVerifier.sol";
 
 
