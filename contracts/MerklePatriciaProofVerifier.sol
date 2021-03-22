@@ -6,7 +6,7 @@
  */
 pragma solidity 0.6.12;
 
-import {RLPReader} from "skozin/Solidity-RLP@2.0.4-pre/contracts/RLPReader.sol";
+import {RLPReader} from "skozin/Solidity-RLP@2.0.4-pre2/contracts/RLPReader.sol";
 
 
 library MerklePatriciaProofVerifier {
@@ -119,9 +119,9 @@ library MerklePatriciaProofVerifier {
                     if (!node[1].isList()) {
                         // rlp(child) was at least 32 bytes. node[1] contains
                         // Keccak256(rlp(child)).
-                        nodeHashHash = keccak256(node[1].toBytes());
+                        nodeHashHash = node[1].dataKeccak256();
                     } else {
-                        // rlp(child) was at less than 32 bytes. node[1] contains
+                        // rlp(child) was less than 32 bytes. node[1] contains
                         // rlp(child).
                         nodeHashHash = node[1].rlpBytesKeccak256();
                     }
@@ -147,7 +147,7 @@ library MerklePatriciaProofVerifier {
 
                         return new bytes(0);
                     } else if (!node[nibble].isList()) {
-                        nodeHashHash = keccak256(node[nibble].toBytes());
+                        nodeHashHash = node[nibble].dataKeccak256();
                     } else {
                         nodeHashHash = node[nibble].rlpBytesKeccak256();
                     }

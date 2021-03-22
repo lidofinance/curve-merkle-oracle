@@ -1,5 +1,5 @@
 dependencies:
-  - hamdiallam/Solidity-RLP@2.0.3
+  - skozin/Solidity-RLP@2.0.4-pre2
 
 compiler:
   solc:
