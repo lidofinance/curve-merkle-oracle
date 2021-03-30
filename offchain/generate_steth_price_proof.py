@@ -53,7 +53,7 @@ def main():
             pool_address=params[0],
             steth_address=params[1],
             pool_slots=params[2:4],
-            steth_slots=params[4:11],
+            steth_slots=params[4:10],
         )
 
     header_blob = rlp.encode(block_header)
