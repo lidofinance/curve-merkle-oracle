@@ -55,7 +55,7 @@ contract StableSwapStateOracle {
 
 
     // Prevent reporitng data that is more fresh than this number of blocks ago
-    uint256 constant public MIN_BLOCK_DELAY = 2;
+    uint256 constant public MIN_BLOCK_DELAY = 15;
 
     // Constants for offchain proof generation
 
