@@ -50,6 +50,10 @@ contract StableSwapStateOracle {
         uint256 stethPrice
     );
 
+    event PriceUpdateThresholdChanged(uint256 threshold);
+    event AdminChanged(address admin);
+
+
     // Prevent reporitng data that is more fresh than this number of blocks ago
     uint256 constant public MIN_BLOCK_DELAY = 2;
 
@@ -119,14 +123,46 @@ contract StableSwapStateOracle {
 
     IPriceHelper internal helper;
 
+    /**
+     * The admin has the right to set the suggested price update threshold (see below).
+     */
+    address public admin;
+
+    /**
+     * The price update threshold percentage advised to oracle clients. If the current price
+     * in the pool differs less than this, the clients are advised to skip updating the oracle.
+     * However, this threshold is not enforced, so clients are free to update the oracle with
+     * any valid price.
+     *
+     * Expressed in basis points: 10000 BP equal to 100%, 100 BP to 1%.
+     */
+    uint256 public priceUpdateThreshold;
+
+    /**
+     * The proven pool state and its timestamp.
+     */
     uint256 public timestamp;
     uint256 public etherBalance;
     uint256 public stethBalance;
     uint256 public stethPrice;
 
 
-    constructor(IPriceHelper _helper) public {
+    constructor(IPriceHelper _helper, address _admin, uint256 _priceUpdateThreshold) public {
         helper = _helper;
+        _setAdmin(_admin);
+        _setPriceUpdateThreshold(_priceUpdateThreshold);
+    }
+
+
+    function setAdmin(address _admin) external {
+        require(msg.sender == admin);
+        _setAdmin(_admin);
+    }
+
+
+    function setPriceUpdateThreshold(uint256 _priceUpdateThreshold) external {
+        require(msg.sender == admin);
+        _setPriceUpdateThreshold(_priceUpdateThreshold);
     }
 
 
@@ -140,7 +176,8 @@ contract StableSwapStateOracle {
         bytes32 stethBeaconBalancePos,
         bytes32 stethBufferedEtherPos,
         bytes32 stethDepositedValidatorsPos,
-        bytes32 stethBeaconValidatorsPos
+        bytes32 stethBeaconValidatorsPos,
+        uint256 advisedPriceUpdateThreshold
     ) {
         return (
             POOL_ADDRESS,
@@ -152,7 +189,8 @@ contract StableSwapStateOracle {
             STETH_BEACON_BALANCE_POS,
             STETH_BUFFERED_ETHER_POS,
             STETH_DEPOSITED_VALIDATORS_POS,
-            STETH_BEACON_VALIDATORS_POS
+            STETH_BEACON_VALIDATORS_POS,
+            priceUpdateThreshold
         );
     }
 
@@ -311,6 +349,9 @@ contract StableSwapStateOracle {
     )
         internal pure returns (uint256)
     {
+        // https://github.com/lidofinance/lido-dao/blob/v1.0.0/contracts/0.4.24/StETH.sol#L283
+        // https://github.com/lidofinance/lido-dao/blob/v1.0.0/contracts/0.4.24/Lido.sol#L719
+        // https://github.com/lidofinance/lido-dao/blob/v1.0.0/contracts/0.4.24/Lido.sol#L706
         if (_totalShares == 0) {
             return 0;
         }
@@ -324,5 +365,19 @@ contract StableSwapStateOracle {
         uint256 A = IStableSwap(POOL_ADDRESS).A_precise();
         uint256 fee = IStableSwap(POOL_ADDRESS).fee();
         return helper.get_dy(1, 0, 10**18, [_etherBalance, _stethBalance], A, fee);
+    }
+
+
+    function _setPriceUpdateThreshold(uint256 _priceUpdateThreshold) internal {
+        require(_priceUpdateThreshold <= 10000);
+        priceUpdateThreshold = _priceUpdateThreshold;
+        emit PriceUpdateThresholdChanged(_priceUpdateThreshold);
+    }
+
+
+    function _setAdmin(address _admin) internal {
+        require(_admin != address(0));
+        admin = _admin;
+        emit AdminChanged(_admin);
     }
 }
