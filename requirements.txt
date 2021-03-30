@@ -1,4 +1,4 @@
-ethereum==2.3.2
+eth-utils==1.10.0
 requests==2.21.0
-rlp==1.1.0
+rlp==2.0.1
 web3==5.17.0

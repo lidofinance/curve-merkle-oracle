@@ -6,13 +6,13 @@ import os
 from pprint import pprint
 from getpass import getpass
 
-from ethereum import block, messages, transactions, utils
 from web3 import Web3
 from web3.logs import DISCARD
 import requests
 import rlp
 
 from state_proof import request_block_header, request_account_proof
+
 
 ORACLE_CONTRACT_ADDRESS = '0x602C71e4DAC47a042Ee7f46E0aee17F94A3bA0B6'
 
@@ -46,8 +46,8 @@ def main():
     oracle_contract = get_oracle_contract(args.contract, w3)
     params = oracle_contract.functions.getProofParams().call()
 
-    (block_header, pool_acct_proof, steth_acct_proof, pool_storage_proofs, steth_storage_proofs) = \
-        generate_proof_data(
+    (block_number, block_header, pool_acct_proof, steth_acct_proof,
+        pool_storage_proofs, steth_storage_proofs) = generate_proof_data(
             rpc_endpoint=args.rpc,
             block_number=block_number,
             pool_address=params[0],
@@ -64,7 +64,7 @@ def main():
         steth_storage_proofs
     )
 
-    print(f"\nBlock number: {block_header.number}\n")
+    print(f"\nBlock number: {block_number}\n")
     print("Header RLP bytes:\n")
     print(f"0x{header_blob.hex()}\n")
     print("Proofs list RLP bytes:\n")
@@ -142,26 +142,27 @@ def generate_proof_data(
         block_number if block_number == "latest" or block_number == "earliest" \
         else hex(int(block_number))
 
-    block_header = request_block_header(
+    (block_number, block_header) = request_block_header(
         rpc_endpoint=rpc_endpoint,
         block_number=block_number,
     )
 
     (pool_acct_proof, pool_storage_proofs) = request_account_proof(
         rpc_endpoint=rpc_endpoint,
-        block_number=block_header.number,
+        block_number=block_number,
         address=pool_address,
         slots=pool_slots,
     )
 
     (steth_acct_proof, steth_storage_proofs) = request_account_proof(
         rpc_endpoint=rpc_endpoint,
-        block_number=block_header.number,
+        block_number=block_number,
         address=steth_address,
         slots=steth_slots,
     )
 
     return (
+        block_number,
         block_header,
         pool_acct_proof,
         steth_acct_proof,
