@@ -6,6 +6,9 @@ import {RLPReader} from "skozin/Solidity-RLP@2.0.4/contracts/RLPReader.sol";
 import {MerklePatriciaProofVerifier} from "./MerklePatriciaProofVerifier.sol";
 
 
+/**
+ * @title A helper library for verification of Merkle Patricia account and state proofs.
+ */
 library StateProofVerifier {
     using RLPReader for RLPReader.RLPItem;
     using RLPReader for bytes;
@@ -35,6 +38,10 @@ library StateProofVerifier {
     }
 
 
+    /**
+     * @notice Parses block header and verifies its presence onchain within the latest 256 blocks.
+     * @param _headerRlpBytes RLP-encoded block header.
+     */
     function verifyBlockHeader(bytes memory _headerRlpBytes)
         internal view returns (BlockHeader memory)
     {
@@ -45,6 +52,10 @@ library StateProofVerifier {
     }
 
 
+    /**
+     * @notice Parses RLP-encoded block header.
+     * @param _headerRlpBytes RLP-encoded block header.
+     */
     function parseBlockHeader(bytes memory _headerRlpBytes)
         internal pure returns (BlockHeader memory)
     {
@@ -60,6 +71,12 @@ library StateProofVerifier {
     }
 
 
+    /**
+     * @notice Verifies Merkle Patricia proof of an account and extracts the account fields.
+     *
+     * @param _addressHash Keccak256 hash of the address corresponding to the account.
+     * @param _stateRootHash MPT root hash of the Ethereum state trie.
+     */
     function extractAccountFromProof(
         bytes32 _addressHash, // keccak256(abi.encodePacked(address))
         bytes32 _stateRootHash,
@@ -92,6 +109,12 @@ library StateProofVerifier {
     }
 
 
+    /**
+     * @notice Verifies Merkle Patricia proof of a slot and extracts the slot's value.
+     *
+     * @param _slotHash Keccak256 hash of the slot position.
+     * @param _stateRootHash MPT root hash of the account's storage trie.
+     */
     function extractSlotValueFromProof(
         bytes32 _slotHash,
         bytes32 _storageRootHash,
