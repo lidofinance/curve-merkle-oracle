@@ -46,8 +46,18 @@ to `StableSwapPriceHelper` using the constructor param:
 
 ```python
 # assuming eth-brownie console
+
 helper = StableSwapPriceHelper.deploy({ 'from': deployer })
-oracle = StableSwapStateOracle.deploy(helper, { 'from': deployer })
+
+price_update_threshold = 300 # 3%
+price_update_threshold_admin = deployer
+
+oracle = StableSwapStateOracle.deploy(
+  helper,
+  price_update_threshold_admin,
+  price_update_threshold,
+  { 'from': deployer }
+)
 ```
 
 To send proofs to the state oracle, call `submitState` function:
@@ -66,6 +76,7 @@ and stETH price. You can access them by calling `getState` and `getPrice`:
 ```python
 (timestamp, etherBalance, stethBalance, stethPrice) = oracle.getState()
 stethPrice = oracle.getPrice()
+print("stETH/ETH price:", stethPrice / 10**18)
 ```
 
 
