@@ -35,47 +35,6 @@ library StateProofVerifier {
     }
 
 
-    function verifyStateProof(
-        bytes32 _addressHash, // keccak256(abi.encodePacked(address))
-        bytes32[] memory _slotHashes, // keccak256(abi.encodePacked(uint256(slotIndex)))
-        bytes memory _blockHeaderRlpBytes, // RLP([parentHash, sha3Uncles, miner, ...])
-        bytes memory _proofRlpBytes // RLP([accountProof, [slotProofs...]])
-    )
-        internal pure returns (
-            BlockHeader memory blockHeader,
-            Account memory account,
-            SlotValue[] memory slots
-        )
-    {
-        blockHeader = parseBlockHeader(_blockHeaderRlpBytes);
-
-        RLPReader.RLPItem[] memory proofs = _proofRlpBytes.toRlpItem().toList();
-        require(proofs.length == 2);
-
-        account = extractAccountFromProof(
-            _addressHash,
-            blockHeader.stateRootHash,
-            proofs[0].toList()
-        );
-
-        slots = new SlotValue[](_slotHashes.length);
-
-        if (!account.exists || _slotHashes.length == 0) {
-            return (blockHeader, account, slots);
-        }
-
-        RLPReader.RLPItem[] memory slotProofs = proofs[1].toList();
-        require(slotProofs.length == _slotHashes.length);
-
-        for (uint256 i = 0; i < _slotHashes.length; ++i) {
-            RLPReader.RLPItem[] memory slotProof = slotProofs[i].toList();
-            slots[i] = extractSlotValueFromProof(_slotHashes[i], account.storageRoot, slotProof);
-        }
-
-        return (blockHeader, account, slots);
-    }
-
-
     function verifyBlockHeader(bytes memory _headerRlpBytes)
         internal view returns (BlockHeader memory)
     {
