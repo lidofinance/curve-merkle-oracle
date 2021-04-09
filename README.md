@@ -85,5 +85,5 @@ python offchain/generate_steth_price_proof.py \
 Some flags are optional:
 
 * Skip the `--keyfile` flag to print the proof without sending a tx.
-* Skip the `--gas-price` flag to use gas prive determined by the node.
+* Skip the `--gas-price` flag to use gas price determined by the node.
 * Skip the `--block` flag to generate a proof correnspoding to the block `latest - 15`.
