@@ -377,6 +377,7 @@ contract StableSwapStateOracle {
 
     function _setAdmin(address _admin) internal {
         require(_admin != address(0));
+        require(_admin != admin);
         admin = _admin;
         emit AdminChanged(_admin);
     }
