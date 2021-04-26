@@ -1,8 +1,5 @@
 dependencies:
-  # this is the same commit (4fa5311) as master branch of the upstream repo
-  # hamdiallam/Solidity-RLP, but we have to use the fork since 2.0.4 tag is
-  # not yet published in the upstream
-  - skozin/Solidity-RLP@2.0.4
+  - hamdiallam/Solidity-RLP@2.0.4
 
 compiler:
   solc:
