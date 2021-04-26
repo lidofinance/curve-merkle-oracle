@@ -2,7 +2,7 @@
 
 A trustless oracle for the ETH/stETH Curve pool using Merkle Patricia proofs of Ethereum state.
 
-The oracle currently assumes that the pool's `fee` and `A` (amplification coefficient) values don't
+The oracle assumes that the pool's `fee` and `A` (amplification coefficient) values don't
 change between the time of proof generation and submission.
 
 
@@ -31,15 +31,15 @@ The repo contains two main contracts:
   from the offchain code, and persists the verified state along with its timestamp.
 
 * [`StableSwapPriceHelper.vy`] is a helper contract used by `StableSwapStateOracle.sol` and written
-  in Vyper. It contains the code for calculating exchange price based on the pool state. The code
-  is copied from the [actual pool contract] with minimal modifiactions.
+  in Vyper. It contains the code for calculating exchange price based on the values of pool's storage
+  slots. The code is copied from the [actual pool contract] with minimal modifications.
 
 [`StableSwapStateOracle.sol`]: ./contracts/StableSwapStateOracle.sol
 [`StableSwapPriceHelper.vy`]: ./contracts/StableSwapPriceHelper.vy
 [actual pool contract]: https://github.com/curvefi/curve-contract/blob/3fa3b6c/contracts/pools/steth/StableSwapSTETH.vy
 
 
-## Deploying and using contracts
+## Deploying and using the contracts
 
 First, deploy `StableSwapPriceHelper`. Then, deploy `StableSwapStateOracle`, pointing it
 to `StableSwapPriceHelper` using the constructor param:
@@ -60,7 +60,7 @@ oracle = StableSwapStateOracle.deploy(
 )
 ```
 
-To send proofs to the state oracle, call `submitState` function:
+To send proofs to the state oracle, call the `submitState` function:
 
 ```python
 header_rlp_bytes = '0x...'
