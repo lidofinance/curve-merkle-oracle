@@ -113,7 +113,7 @@ library StateProofVerifier {
      * @notice Verifies Merkle Patricia proof of a slot and extracts the slot's value.
      *
      * @param _slotHash Keccak256 hash of the slot position.
-     * @param _stateRootHash MPT root hash of the account's storage trie.
+     * @param _storageRootHash MPT root hash of the account's storage trie.
      */
     function extractSlotValueFromProof(
         bytes32 _slotHash,
