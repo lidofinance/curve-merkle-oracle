@@ -62,6 +62,8 @@ library StateProofVerifier {
         BlockHeader memory result;
         RLPReader.RLPItem[] memory headerFields = _headerRlpBytes.toRlpItem().toList();
 
+        require(headerFields.length > HEADER_TIMESTAMP_INDEX);
+
         result.stateRootHash = bytes32(headerFields[HEADER_STATE_ROOT_INDEX].toUint());
         result.number = headerFields[HEADER_NUMBER_INDEX].toUint();
         result.timestamp = headerFields[HEADER_TIMESTAMP_INDEX].toUint();
