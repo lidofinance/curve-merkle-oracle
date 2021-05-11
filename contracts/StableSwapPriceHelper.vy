@@ -1,4 +1,8 @@
 # @version 0.2.8
+"""
+@author Curve.Fi
+@license Copyright (c) Curve.Fi, 2020 - all rights reserved
+"""
 
 # The following code has been copied with minimal modifications from
 # https://github.com/curvefi/curve-contract/blob/3fa3b6c/contracts/pools/steth/StableSwapSTETH.vy
