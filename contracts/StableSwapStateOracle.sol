@@ -255,6 +255,7 @@ contract StableSwapStateOracle {
 
     /**
      * @return _timestamp The timestamp of the proven pool state/price.
+     *         Will be zero in the case no state has been reported yet.
      * @return _etherBalance The proven ETH balance of the pool.
      * @return _stethBalance The proven stETH balance of the pool.
      * @return _stethPrice The proven stETH/ETH price in the pool.
