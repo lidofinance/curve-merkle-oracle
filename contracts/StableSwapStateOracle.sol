@@ -222,7 +222,7 @@ contract StableSwapStateOracle {
 
 
     /**
-     * @notice Retuens a set of values used by the clients for proof generation.
+     * @notice Returns a set of values used by the clients for proof generation.
      */
     function getProofParams() external view returns (
         address poolAddress,
