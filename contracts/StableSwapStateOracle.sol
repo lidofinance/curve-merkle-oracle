@@ -92,7 +92,7 @@ contract StableSwapStateOracle {
     /// @dev bytes32(uint256(POOL_ADMIN_BALANCES_0_POS) + 1)
     bytes32 constant public POOL_ADMIN_BALANCES_1_POS = 0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf7;
 
-    /// @dev keccak256(uint256(0xdc24316b9ae028f1497c275eb9192a3ea0f67022) . uint256(0))
+    /// @dev keccak256(abi.encodePacked(uint256(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022), uint256(0)))
     bytes32 constant public STETH_POOL_SHARES_POS = 0xae68078d7ee25b2b7bcb7d4b9fe9acf61f251fe08ff637df07889375d8385158;
 
     /// @dev keccak256("lido.StETH.totalShares")
