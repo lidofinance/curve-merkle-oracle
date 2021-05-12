@@ -34,7 +34,6 @@ library MerklePatriciaProofVerifier {
         uint256 mptKeyOffset = 0;
 
         bytes32 nodeHashHash;
-        bytes memory rlpNode;
         RLPReader.RLPItem[] memory node;
 
         RLPReader.RLPItem memory rlpValue;
