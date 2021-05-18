@@ -6,6 +6,17 @@ The oracle assumes that the pool's `fee` and `A` (amplification coefficient) val
 change between the time of proof generation and submission.
 
 
+## Audits
+
+Commits [`1033b3e`] and [`ae093b3`] (the currently deployed version) were audited by MixBytes.
+Contracts in both commits were assumed as secure to use according to the auditors' security
+criteria. See [the full report] for details.
+
+[`1033b3e`]: https://github.com/lidofinance/curve-merkle-oracle/tree/1033b3e84142317ffd8f366b52e489d5eb49c73f
+[`ae093b3`]: https://github.com/lidofinance/curve-merkle-oracle/tree/ae093b308999a564ed3f23d52c6c5dce946dbfa7
+[the full report]: https://github.com/lidofinance/audits/blob/main/MixBytes%20stETH%20price%20oracle%20Security%20Audit%20Report%2005-2021.pdf
+
+
 ## Mechanics
 
 The oracle works by generating and verifying Merkle Patricia proofs of the following Ethereum state:
