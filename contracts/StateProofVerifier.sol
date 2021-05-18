@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.4/contracts/RLPReader.sol";
+import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.5/contracts/RLPReader.sol";
 import {MerklePatriciaProofVerifier} from "./MerklePatriciaProofVerifier.sol";
 
 
@@ -61,6 +61,8 @@ library StateProofVerifier {
     {
         BlockHeader memory result;
         RLPReader.RLPItem[] memory headerFields = _headerRlpBytes.toRlpItem().toList();
+
+        require(headerFields.length > HEADER_TIMESTAMP_INDEX);
 
         result.stateRootHash = bytes32(headerFields[HEADER_STATE_ROOT_INDEX].toUint());
         result.number = headerFields[HEADER_NUMBER_INDEX].toUint();

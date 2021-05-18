@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.4/contracts/RLPReader.sol";
+import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.5/contracts/RLPReader.sol";
 import {StateProofVerifier as Verifier} from "./StateProofVerifier.sol";
 import {SafeMath} from "./SafeMath.sol";
 
@@ -92,7 +92,7 @@ contract StableSwapStateOracle {
     /// @dev bytes32(uint256(POOL_ADMIN_BALANCES_0_POS) + 1)
     bytes32 constant public POOL_ADMIN_BALANCES_1_POS = 0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf7;
 
-    /// @dev keccak256(uint256(0xdc24316b9ae028f1497c275eb9192a3ea0f67022) . uint256(0))
+    /// @dev keccak256(abi.encodePacked(uint256(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022), uint256(0)))
     bytes32 constant public STETH_POOL_SHARES_POS = 0xae68078d7ee25b2b7bcb7d4b9fe9acf61f251fe08ff637df07889375d8385158;
 
     /// @dev keccak256("lido.StETH.totalShares")
@@ -222,7 +222,7 @@ contract StableSwapStateOracle {
 
 
     /**
-     * @notice Retuens a set of values used by the clients for proof generation.
+     * @notice Returns a set of values used by the clients for proof generation.
      */
     function getProofParams() external view returns (
         address poolAddress,
@@ -255,6 +255,7 @@ contract StableSwapStateOracle {
 
     /**
      * @return _timestamp The timestamp of the proven pool state/price.
+     *         Will be zero in the case no state has been reported yet.
      * @return _etherBalance The proven ETH balance of the pool.
      * @return _stethBalance The proven stETH balance of the pool.
      * @return _stethPrice The proven stETH/ETH price in the pool.

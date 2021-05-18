@@ -6,7 +6,7 @@
  */
 pragma solidity 0.6.12;
 
-import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.4/contracts/RLPReader.sol";
+import {RLPReader} from "hamdiallam/Solidity-RLP@2.0.5/contracts/RLPReader.sol";
 
 
 library MerklePatriciaProofVerifier {
@@ -34,7 +34,6 @@ library MerklePatriciaProofVerifier {
         uint256 mptKeyOffset = 0;
 
         bytes32 nodeHashHash;
-        bytes memory rlpNode;
         RLPReader.RLPItem[] memory node;
 
         RLPReader.RLPItem memory rlpValue;
