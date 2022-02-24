@@ -4,6 +4,3 @@ compiler:
     optimizer:
       enabled: true
       runs: 200
-
-dependencies:
-  - hamdiallam/Solidity-RLP@2.0.5
