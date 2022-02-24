@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity >=0.8.12;
 
 import {RLPReader} from "./RLPReader.sol";
 import {StateProofVerifier as Verifier} from "./StateProofVerifier.sol";
@@ -193,7 +193,7 @@ contract StableSwapStateOracle {
      * @param _priceUpdateThreshold The initial value of the suggested price update threshold.
      *        Expressed in basis points, 10000 BP corresponding to 100%.
      */
-    constructor(IPriceHelper _helper, address _admin, uint256 _priceUpdateThreshold) public {
+    constructor(IPriceHelper _helper, address _admin, uint256 _priceUpdateThreshold) {
         helper = _helper;
         _setAdmin(_admin);
         _setPriceUpdateThreshold(_priceUpdateThreshold);
