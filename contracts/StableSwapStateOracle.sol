@@ -4,7 +4,6 @@ pragma solidity >=0.8.12;
 
 import {RLPReader} from "./RLPReader.sol";
 import {StateProofVerifier as Verifier} from "./StateProofVerifier.sol";
-import {SafeMath} from "./SafeMath.sol";
 
 
 interface IPriceHelper {
@@ -38,7 +37,6 @@ interface IStableSwap {
 contract StableSwapStateOracle {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
-    using SafeMath for uint256;
 
     /**
      * @notice Logs the updated slot values of Curve pool and stETH contracts.
@@ -405,7 +403,7 @@ contract StableSwapStateOracle {
             slotStethBeaconValidators.value
         );
 
-        uint256 newEtherBalance = accountPool.balance.sub(slotPoolAdminBalances0.value);
+        uint256 newEtherBalance = accountPool.balance - slotPoolAdminBalances0.value;
         uint256 newStethBalance = _getStethBalanceByShares(
             slotStethPoolShares.value,
             slotStethTotalShares.value,
@@ -413,7 +411,7 @@ contract StableSwapStateOracle {
             slotStethBufferedEther.value,
             slotStethDepositedValidators.value,
             slotStethBeaconValidators.value
-        ).sub(slotPoolAdminBalances1.value);
+        ) - slotPoolAdminBalances1.value;
 
         uint256 newStethPrice = _calcPrice(newEtherBalance, newStethBalance);
 
@@ -446,9 +444,9 @@ contract StableSwapStateOracle {
         if (_totalShares == 0) {
             return 0;
         }
-        uint256 transientBalance = _depositedValidators.sub(_beaconValidators).mul(STETH_DEPOSIT_SIZE);
-        uint256 totalPooledEther = _bufferedEther.add(_beaconBalance).add(transientBalance);
-        return _shares.mul(totalPooledEther).div(_totalShares);
+        uint256 transientBalance = (_depositedValidators - _beaconValidators) * STETH_DEPOSIT_SIZE;
+        uint256 totalPooledEther = _bufferedEther + _beaconBalance + transientBalance;
+        return (_shares * totalPooledEther) / _totalShares;
     }
 
 
