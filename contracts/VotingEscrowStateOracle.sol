@@ -64,7 +64,7 @@ contract VotingEscrowOracle {
         address _user,
         uint256 _global_epoch,
         uint256 _user_epoch,
-        uint256 _last_point_ts,
+        uint256 _last_point_ts
     ) external view returns(address account, uint256[20] memory positions){
         account = VOTING_ESCROW;
 
