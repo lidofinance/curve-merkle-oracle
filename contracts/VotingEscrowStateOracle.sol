@@ -54,58 +54,6 @@ contract VotingEscrowOracle {
     }
 
     /**
-      * @notice Generate the arguments required for the `eth_getProofs` RPC call
-      * @param _user The account the storage proof will be generated for
-      * @param _global_epoch The value returned from `VotingEscrow.epoch()`
-      * @param _user_epoch The value returned from `VotingEscrow.user_point_epoch(address)`
-      * @param _last_point_ts The timestamp of the last global point returned from `VotingEscrow.point_history(uint256)`
-      */
-    function generate_eth_get_proof_params(
-        address _user,
-        uint256 _global_epoch,
-        uint256 _user_epoch,
-        uint256 _last_point_ts
-    ) external view returns(address account, uint256[20] memory positions){
-        account = VOTING_ESCROW;
-
-        // `VotingEscrow.epoch()`
-        positions[0] = 3;
-
-        // `VotingEscrow.point_history(uint256)`
-        uint256 point_history_pos = uint256(keccak256(abi.encode(uint256(keccak256(abi.encode(4))) + _global_epoch)));
-        positions[1] = point_history_pos; // bias
-        positions[2] = point_history_pos + 1; // slope
-        positions[3] = point_history_pos + 2; // ts
-        positions[4] = point_history_pos + 3; // blk
-
-        // `VotingEscrow.user_point_epoch(address)`
-        positions[5] = uint256(keccak256(abi.encode(6, _user)));
-
-        // `VotingEscrow.user_point_history(address,uint256)`
-        uint256 user_point_history_pos = uint256(keccak256(abi.encode(uint256(keccak256(abi.encode(keccak256(abi.encode(5, _user))))) + _user_epoch)));
-        positions[6] = user_point_history_pos; // bias
-        positions[7] = user_point_history_pos + 1; // bias
-        positions[8] = user_point_history_pos + 2; // bias
-        positions[9] = user_point_history_pos + 3; // bias
-
-        // `VotingEscrow.locked(address)`
-        uint256 locked_pos = uint256(keccak256(abi.encode(keccak256(abi.encode(2, _user)))));
-        positions[10] = locked_pos;
-        positions[11] = locked_pos + 1;
-
-        // `VotingEscrow.slope_changes(uint256)`
-        uint256 start_time = (_last_point_ts / WEEK) * WEEK;
-        positions[12] = uint256(keccak256(abi.encode(7, start_time)));
-        positions[13] = uint256(keccak256(abi.encode(7, start_time + WEEK)));
-        positions[14] = uint256(keccak256(abi.encode(7, start_time + WEEK * 2)));
-        positions[15] = uint256(keccak256(abi.encode(7, start_time + WEEK * 3)));
-        positions[16] = uint256(keccak256(abi.encode(7, start_time + WEEK * 4)));
-        positions[17] = uint256(keccak256(abi.encode(7, start_time + WEEK * 5)));
-        positions[18] = uint256(keccak256(abi.encode(7, start_time + WEEK * 6)));
-        positions[19] = uint256(keccak256(abi.encode(7, start_time + WEEK * 7)));
-    }
-
-    /**
       * @notice Get the Ethereum blockhash for block number `_eth_block_number`
       * @dev Reverts if the blockhash is unavailable, value in storage is `bytes32(0)`
       * @param _eth_block_number The block number to query the blockhash of
