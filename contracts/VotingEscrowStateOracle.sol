@@ -87,6 +87,31 @@ contract VotingEscrowOracle {
         return abi.decode(abi.encode(last_point.bias), (uint256));
     }
 
+    function totalSupply() external view returns(uint256) {
+        Point memory last_point = point_history[epoch];
+        uint256 t_i = (last_point.ts / WEEK) * WEEK;  // value in the past
+        for (uint256 i = 0; i < 255; i++) {
+            t_i += WEEK;  // + week
+            int128 d_slope = 0;
+            if (t_i > block.timestamp) {
+                t_i = block.timestamp;
+            } else {
+                d_slope = slope_changes[t_i];
+            }
+            last_point.bias -= last_point.slope * abi.decode(abi.encode(t_i - last_point.ts), (int128));
+            if (t_i == block.timestamp) {
+                break;
+            }
+            last_point.slope += d_slope;
+            last_point.ts = t_i;
+        }
+
+        if (last_point.bias < 0) {
+            return 0;
+        }
+        return abi.decode(abi.encode(last_point.bias), (uint256));
+    }
+
     function submit_state(address _user, bytes memory _block_header_rlp, bytes memory _proof_rlp) external {
         // verify block header
         Verifier.BlockHeader memory block_header = Verifier.parseBlockHeader(_block_header_rlp);
