@@ -77,6 +77,19 @@ contract VotingEscrowOracle {
         ANYCALL = _anycall;
     }
 
+    function balanceOf(address _user) external view returns(uint256) {
+        uint256 _epoch = user_point_epoch[_user];
+        if (_epoch == 0) {
+            return 0;
+        }
+        Point memory last_point = user_point_history[_user][_epoch];
+        last_point.bias -= last_point.slope * abi.decode(abi.encode(block.timestamp - last_point.ts), (int128));
+        if (last_point.bias < 0) {
+            return 0;
+        }
+        return abi.decode(abi.encode(last_point.bias), (uint256));
+    }
+
     function submit_state(address _user, bytes memory _block_header_rlp, bytes memory _proof_rlp) external {
         // verify block header
         Verifier.BlockHeader memory block_header = Verifier.parseBlockHeader(_block_header_rlp);
