@@ -58,7 +58,9 @@ contract VotingEscrowOracle {
 
     mapping(uint256 => int128) public slope_changes;
     mapping(address => LockedBalance) public locked;
-    uint256 public last_timestamp; /// timestamp of the last block used to submit state
+
+    // last block number used to submit state
+    mapping(address => uint256) public last_block_submitted;
 
     /// Log a blockhash update
     event SetBlockhash(uint256 _eth_block_number, bytes32 _eth_blockhash);
@@ -158,9 +160,15 @@ contract VotingEscrowOracle {
         }
 
         {
-            /// incrememt the epoch storage var only
+            /// incrememt the epoch storage var only if fresh
+            /// also update slope changes too
             if (slot_epoch.value > epoch) {
                 epoch = slot_epoch.value;
+
+                uint256 start_time = (slot_point_history[2].value / WEEK) * WEEK;
+                for (uint256 i = 0; i < 8; i++) {
+                    slope_changes[start_time + WEEK * i] = abi.decode(abi.encode(slot_slope_changes[i].value), (int128));
+                }
             }
             /// always set the point_history structs
             point_history[slot_epoch.value] = Point(
@@ -181,6 +189,15 @@ contract VotingEscrowOracle {
                 slot_user_point_history[2].value, // ts
                 slot_user_point_history[3].value // blk
             );
+
+            // update the locked storage var if this is fresh data for the user
+            if (block_header.number > last_block_submitted[_user]) {
+                locked[_user] = LockedBalance(
+                    abi.decode(abi.encode(slot_locked[0].value), (int128)),
+                    slot_locked[1].value
+                );
+                last_block_submitted[_user] = block_header.number;
+            }
         }
     }
 
