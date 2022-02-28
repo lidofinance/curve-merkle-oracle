@@ -37,8 +37,6 @@ contract VotingEscrowOracle {
     /// Week in seconds
     uint256 constant WEEK = 1 weeks;
 
-
-
     /// Address of the AnyCallProxy for the chain this contract is deployed on
     address public immutable ANYCALL;
 
@@ -51,6 +49,16 @@ contract VotingEscrowOracle {
     address public owner;
     /// Future owner of the contract
     address public future_owner;
+
+    /// Migrated `VotingEscrow` storage variables
+    uint256 public epoch;
+    Point[100000000000000000000000000000] public point_history;
+    mapping(address => uint256) public user_point_epoch;
+    mapping(address => Point[1000000000]) public user_point_history;
+
+    mapping(uint256 => int128) public slope_changes;
+    mapping(address => LockedBalance) public locked;
+    uint256 public last_timestamp; /// timestamp of the last block used to submit state
 
     /// Log a blockhash update
     event SetBlockhash(uint256 _eth_block_number, bytes32 _eth_blockhash);
@@ -147,6 +155,32 @@ contract VotingEscrowOracle {
                 proofs[13 + i].toList()
             );
             require(slot_slope_changes[i].exists); // dev: slot does not exist
+        }
+
+        {
+            /// incrememt the epoch storage var only
+            if (slot_epoch.value > epoch) {
+                epoch = slot_epoch.value;
+            }
+            /// always set the point_history structs
+            point_history[slot_epoch.value] = Point(
+                abi.decode(abi.encode(slot_point_history[0].value), (int128)), // bias
+                abi.decode(abi.encode(slot_point_history[1].value), (int128)), // slope
+                slot_point_history[2].value, // ts
+                slot_point_history[3].value // blk
+            );
+
+            // update the user point epoch if it is newer
+            if (slot_user_point_epoch.value > user_point_epoch[_user]) {
+                user_point_epoch[_user] = slot_user_point_epoch.value;
+            }
+            /// always set the point_history structs
+            user_point_history[_user][slot_user_point_epoch.value] = Point(
+                abi.decode(abi.encode(slot_user_point_history[0].value), (int128)), // bias
+                abi.decode(abi.encode(slot_user_point_history[1].value), (int128)), // slope
+                slot_user_point_history[2].value, // ts
+                slot_user_point_history[3].value // blk
+            );
         }
     }
 
