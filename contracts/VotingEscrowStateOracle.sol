@@ -59,7 +59,7 @@ contract VotingEscrowOracle {
       * @param _eth_block_number The block number to query the blockhash of
       * @return eth_blockhash The blockhash of `_eth_block_number`
       */
-    function get_eth_blockhash(uint256 _eth_block_number) public view returns(bytes32 eth_blockhash) {
+    function get_eth_blockhash(uint256 _eth_block_number) external view returns(bytes32 eth_blockhash) {
         eth_blockhash = _eth_blockhash[_eth_block_number];
         require(eth_blockhash != bytes32(0)); // dev: blockhash unavailable
     }
