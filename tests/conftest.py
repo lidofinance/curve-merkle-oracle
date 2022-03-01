@@ -24,6 +24,8 @@ BLOCK_HEADER = (
     "baseFeePerGas",  # added by EIP-1559 and is ignored in legacy headers
 )
 
+BLOCK_NUMBERS = np.linspace(11863283, 14297900, dtype=int).tolist()
+
 HOLDERS = [
     "0x7a16ff8270133f063aab6c9977183d9e72835428",
     "0xf89501b77b2fa6329f94f5a05fe84cebb5c8b1a0",
@@ -78,14 +80,36 @@ HOLDERS = [
 ]
 
 
-@pytest.fixture
+# account fixtures
+
+
+@pytest.fixture(scope="module")
 def alice(accounts):
     return accounts[0]
 
 
-@pytest.fixture
+# contract fixtures
+
+
+@pytest.fixture(scope="module")
 def state_oracle(alice, VotingEscrowStateOracle):
     return VotingEscrowStateOracle.deploy(ZERO_ADDRESS, {"from": alice})
+
+
+# parameterized fixtures
+
+
+@pytest.fixture(scope="module", params=BLOCK_NUMBERS)
+def block_number(request):
+    pass
+
+
+@pytest.fixture(scope="module", params=HOLDERS)
+def holder(request):
+    return request.param
+
+
+# isolation fixture
 
 
 @pytest.fixture(autouse=True)
@@ -93,14 +117,13 @@ def isolation(module_isolation, fn_isolation):
     pass
 
 
-@pytest.fixture
-def block_number():
-    for block_n in np.linspace(11863283, 14297900, dtype=int).tolist():
-        yield block_n
+# helper function fixtures
 
 
 @pytest.fixture
 def serialize_block():
+    """Helper function to rlp serialize a block header"""
+
     def _serialize_block(block):
         block_header = [
             HexBytes("0x") if isinstance((v := block[k]), int) and v == 0 else HexBytes(v)
@@ -114,6 +137,8 @@ def serialize_block():
 
 @pytest.fixture
 def serialize_proofs():
+    """Helper function to rlp serialize a proof generated via web3.eth.get_proof"""
+
     def _serialize_proofs(proofs):
         account_proof = list(map(rlp.decode, map(HexBytes, proofs["accountProof"])))
         storage_proofs = [
