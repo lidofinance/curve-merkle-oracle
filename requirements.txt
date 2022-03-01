@@ -207,6 +207,8 @@ netaddr==0.8.0
     #   multiaddr
 nodeenv==1.6.0
     # via pre-commit
+numpy==1.22.2
+    # via -r requirements.in
 packaging==21.3
     # via
     #   eth-brownie

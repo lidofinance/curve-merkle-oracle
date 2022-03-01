@@ -1,7 +1,8 @@
 black
-eth-brownie
 brownie-token-tester
+eth-brownie
 flake8==3.9.2
 isort
+numpy
 pip-tools
 pre-commit
