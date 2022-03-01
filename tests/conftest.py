@@ -108,7 +108,7 @@ def state_oracle(alice, VotingEscrowStateOracle):
 
 @pytest.fixture(scope="module", params=BLOCK_NUMBERS)
 def block_number(request):
-    pass
+    return request.param
 
 
 @pytest.fixture(scope="module", params=HOLDERS)
@@ -129,7 +129,7 @@ def serialized_block(block, serialize_block):
 
 @pytest.fixture(scope="module")
 def proofs(block_number, holder):
-    with open(f"tests/block_{block_number}/proofs_{holder}.json") as f:
+    with open(f"tests/data/block_{block_number}/proofs_{holder}.json") as f:
         return json.load(f)
 
 
@@ -149,7 +149,7 @@ def isolation(module_isolation, fn_isolation):
 # helper function fixtures
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def serialize_block():
     """Helper function to rlp serialize a block header"""
 
@@ -164,7 +164,7 @@ def serialize_block():
     return _serialize_block
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def serialize_proofs():
     """Helper function to rlp serialize a proof generated via web3.eth.get_proof"""
 
