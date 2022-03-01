@@ -8,7 +8,7 @@ interface AnyCallProxy {
     function context() external view returns(address, uint256);
 }
 
-contract VotingEscrowOracle {
+contract VotingEscrowStateOracle {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
 
