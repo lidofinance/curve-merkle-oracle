@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 import rlp
@@ -92,6 +94,11 @@ def alice(accounts):
 
 
 @pytest.fixture(scope="module")
+def state_sender(alice, StateSender):
+    return StateSender.deploy({"from": alice})
+
+
+@pytest.fixture(scope="module")
 def state_oracle(alice, VotingEscrowStateOracle):
     return VotingEscrowStateOracle.deploy(ZERO_ADDRESS, {"from": alice})
 
@@ -107,6 +114,28 @@ def block_number(request):
 @pytest.fixture(scope="module", params=HOLDERS)
 def holder(request):
     return request.param
+
+
+@pytest.fixture(scope="module")
+def block(block_number):
+    with open(f"tests/data/block_{block_number}/block.json") as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="module")
+def serialized_block(block, serialize_block):
+    return serialize_block(block)
+
+
+@pytest.fixture(scope="module")
+def proofs(block_number, holder):
+    with open(f"tests/block_{block_number}/proofs_{holder}.json") as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="module")
+def serialized_proofs(proofs, serialize_proofs):
+    return serialize_proofs(proofs)
 
 
 # isolation fixture
