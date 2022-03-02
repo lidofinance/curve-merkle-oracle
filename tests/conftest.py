@@ -138,6 +138,14 @@ def serialized_proofs(proofs, serialize_proofs):
     return serialize_proofs(proofs)
 
 
+# forked fixture
+
+
+@pytest.fixture(scope="module")
+def voting_escrow(Contract):
+    return Contract("0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2")
+
+
 # isolation fixture
 
 
