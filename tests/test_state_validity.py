@@ -1,5 +1,7 @@
 import pytest
 
+WEEK = 86400 * 7
+
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(alice, state_oracle, holder, block, serialized_block, serialized_proofs, web3):
@@ -19,8 +21,9 @@ def test_valid_properties(block, chain, holder, state_oracle, voting_escrow):
 
     expected_totalSupply = voting_escrow.totalSupply(timestamp, block_identifier=block["number"])
     oracle_totalSupply = state_oracle.totalSupply(timestamp)
+    last_point = state_oracle.point_history(state_oracle.epoch())
 
-    if timestamp - block["timestamp"] > 86400 * 7 * 8:
+    if (timestamp // WEEK * WEEK) - (last_point["ts"] // WEEK * WEEK) > 8:
         # when we don't go past the bounds of the slope_changes state
         # we want the totalSupply to be greater than the expected totalSupply
         # incentives users to update the oracle
