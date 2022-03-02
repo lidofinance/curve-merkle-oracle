@@ -5,6 +5,7 @@ import numpy as np
 import requests
 from brownie import ETH_ADDRESS, StateSender, convert, interface, web3
 from eth_abi import decode_single
+from tqdm import tqdm
 from web3.datastructures import AttributeDict
 
 # Assign constants
@@ -48,7 +49,7 @@ def main():
         "state_override": {ETH_ADDRESS: {"code": StateSender._build["deployedBytecode"]}},
     }
 
-    for block_number in block_numbers:
+    for block_number in tqdm(block_numbers):
         # make necessary directory if it doesn't exist
         directory_path = f"tests/data/block_{block_number}"
         os.makedirs(directory_path, exist_ok=True)
@@ -62,7 +63,7 @@ def main():
         eth_call_kwargs.update(block_identifier=block_number)  # update the dictionary in-place
         _, encoded_array = multicall.aggregate.decode_output(web3.eth.call(**eth_call_kwargs))
 
-        for holder, encoded_proof_args in zip(holders, encoded_array):
+        for holder, encoded_proof_args in tqdm(zip(holders, encoded_array)):
             proof_args = decode_single("(address,uint256[20],uint256)", encoded_proof_args)
             proofs = web3.eth.get_proof(convert.to_address(proof_args[0]), *proof_args[1:])
 
