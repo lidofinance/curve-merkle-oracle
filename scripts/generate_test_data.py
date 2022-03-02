@@ -15,13 +15,13 @@ VOTING_ESCROW = "0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2"
 # Query the addresses of the top 50 veCRV holders
 resp = requests.get(
     f"https://api.ethplorer.io/getTopTokenHolders/{VOTING_ESCROW}",
-    params={"apiKey": ETHPLORER_API_KEY, "limit": "50"},
+    params={"apiKey": ETHPLORER_API_KEY, "limit": "10"},
 )
 assert resp.ok, "Failed to query top 50 veCRV holders"
 holders = [holder["address"] for holder in resp.json()["holders"]]
 
 # Assign list of block numbers to generate data for, starting from 11863283
-block_numbers = np.linspace(11863283, 14297900, dtype=int).tolist()
+block_numbers = np.linspace(11863283, 14297900, num=15, dtype=int).tolist()
 
 
 class Web3Encoder(json.JSONEncoder):
