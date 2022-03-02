@@ -105,6 +105,9 @@ contract VotingEscrowStateOracle {
                 t_i = _timestamp;
             } else {
                 d_slope = slope_changes[t_i];
+                if (d_slope == 0) {
+                    break;
+                }
             }
             last_point.bias -= last_point.slope * abi.decode(abi.encode(t_i - last_point.ts), (int128));
             if (t_i == _timestamp) {
