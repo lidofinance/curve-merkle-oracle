@@ -75,12 +75,16 @@ contract VotingEscrowStateOracle {
     }
 
     function balanceOf(address _user) external view returns(uint256) {
+        return balanceOf(_user, block.timestamp);
+    }
+
+    function balanceOf(address _user, uint256 _timestamp) public view returns(uint256) {
         uint256 _epoch = user_point_epoch[_user];
         if (_epoch == 0) {
             return 0;
         }
         Point memory last_point = user_point_history[_user][_epoch];
-        last_point.bias -= last_point.slope * abi.decode(abi.encode(block.timestamp - last_point.ts), (int128));
+        last_point.bias -= last_point.slope * abi.decode(abi.encode(_timestamp - last_point.ts), (int128));
         if (last_point.bias < 0) {
             return 0;
         }
@@ -88,18 +92,22 @@ contract VotingEscrowStateOracle {
     }
 
     function totalSupply() external view returns(uint256) {
+        return totalSupply(block.timestamp);
+    }
+
+    function totalSupply(uint256 _timestamp) public view returns(uint256) {
         Point memory last_point = point_history[epoch];
         uint256 t_i = (last_point.ts / WEEK) * WEEK;  // value in the past
         for (uint256 i = 0; i < 255; i++) {
             t_i += WEEK;  // + week
             int128 d_slope = 0;
-            if (t_i > block.timestamp) {
-                t_i = block.timestamp;
+            if (t_i > _timestamp) {
+                t_i = _timestamp;
             } else {
                 d_slope = slope_changes[t_i];
             }
             last_point.bias -= last_point.slope * abi.decode(abi.encode(t_i - last_point.ts), (int128));
-            if (t_i == block.timestamp) {
+            if (t_i == _timestamp) {
                 break;
             }
             last_point.slope += d_slope;
